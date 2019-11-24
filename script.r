@@ -10,17 +10,60 @@ heartDiseaseDataframe <- read.csv("./dataset/processed.cleveland.data", fileEnco
 # Setting the name of the columns
 colnames(heartDiseaseDataframe) <- c("Age", "Sex", "ChestPainType", "RestBloodPressure", "SerumCholestoral", "FastingBloodSugar", "ResElectrocardiographic", "MaxHeartRate", "ExerciseInduced", "Oldpeak", "Slope", "MajorVessels", "Thal", "Class")
 
-# Change "?" to NA
-heartDiseaseDataframe[heartDiseaseDataframe == "?"] <- NA
+# Dataset analysis
 
-# Change class 2,3,4 to 1
-heartDiseaseDataframe$Class[heartDiseaseDataframe$Class %in% c("2", "3", "4")] <- 1
+  # Header of dataset
+  head(heartDiseaseDataframe)
 
-# Removing rows with NA values
-heartDiseaseDataframe <- na.omit(heartDiseaseDataframe)
+  # Dataset structure
+  str(heartDiseaseDataframe)
 
+# Adjusting data
+  
+  # Change "?" to NA
+  heartDiseaseDataframe[heartDiseaseDataframe == "?"] <- NA
+
+# Handling table columns
+  
+  # Class
+  heartDiseaseDataframe$Class <- ifelse(test = heartDiseaseDataframe$Class == 0, yes = "Healthy", no = "Unhealthy")
+  heartDiseaseDataframe$Class <- as.factor(heartDiseaseDataframe$Class)
+  
+  # Left columns 
+  for(i in 1:length(heartDiseaseDataframe[,-ncol(heartDiseaseDataframe)])){
+    if (colnames(heartDiseaseDataframe[i]) != colnames(heartDiseaseDataframe[10])) {
+      heartDiseaseDataframe[,i] <- as.integer(heartDiseaseDataframe[,i])
+    }
+  }
+  
+# Cleaning data
+  
+ # Omiting rows with empty values
+ heartDiseaseDataframe <- na.omit(heartDiseaseDataframe)
+ 
+ # Removing outliers for each column
+ for(i in 1:length(heartDiseaseDataframe[,-ncol(heartDiseaseDataframe)])){
+   outlier_values <- boxplot.stats(heartDiseaseDataframe[,i])$out
+   heartDiseaseDataframe <- heartDiseaseDataframe[!(heartDiseaseDataframe[,i] %in% outlier_values), ]
+ }
+ 
 # Visualization
-
+  
+  # General visualization
+  plot(heartDiseaseDataframe)
+  
+  # Boxplot for all columns
+  for (i in 1:length(heartDiseaseDataframe)) {
+    boxplot(heartDiseaseDataframe[,i]~Class, data = heartDiseaseDataframe, main = colnames(heartDiseaseDataframe[i]), ylab = colnames(heartDiseaseDataframe[i]))
+    Sys.sleep(2)
+  }
+  
+  # Histogram for all columns
+  for (i in 1:length(heartDiseaseDataframe[,-ncol(heartDiseaseDataframe)])) {
+    hist(heartDiseaseDataframe[,i], main = colnames(heartDiseaseDataframe[i]), xlab = colnames(heartDiseaseDataframe[i]))
+    Sys.sleep(2)
+  }
+  
   # Age distribution
   qplot(heartDiseaseDataframe$Age, geom="histogram") +
     labs(x = "Age", y = "count")
@@ -82,14 +125,14 @@ heartDiseaseDataframe <- na.omit(heartDiseaseDataframe)
   confusionMatrix(nb_res, testClass)
   
   # RF classification
-  rf_classifier <- randomForest(x = train, 
-                                y = trainClass,
+  rf_classifier <- randomForest(formula = Class ~ .,
+                                data = train_svm,
                                 ntree = 500,
-                                proximity = TRUE)
+                                importance = TRUE)
   
   rf_res = predict(rf_classifier, newdata = test)
   
   # Accuracy of RF
-  confusionMatrix(rf_res, testClass)
+  confusionMatrix(as.factor(rf_res), testClass)
 
   
