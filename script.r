@@ -2,16 +2,19 @@ library(ggplot2)
 library(class)
 library(caret)
 library(e1071)
+library(randomForest)
 
 # Importing the dataset
 heartDiseaseDataframe <- read.csv("./dataset/processed.cleveland.data", fileEncoding = "UTF-8",sep=",", header = FALSE)
 
 # Setting the name of the columns
-colnames(heartDiseaseDataframe) <- c("Age", "Sex", "ChestPainType", "RestBloodPressure", "SerumCholestoral", "FastingBloodSugar", "ResElectrocardiogr
-aphic", "MaxHeartRate", "ExerciseInduced", "Oldpeak", "Slope", "MajorVessels", "Thal", "Class")
+colnames(heartDiseaseDataframe) <- c("Age", "Sex", "ChestPainType", "RestBloodPressure", "SerumCholestoral", "FastingBloodSugar", "ResElectrocardiographic", "MaxHeartRate", "ExerciseInduced", "Oldpeak", "Slope", "MajorVessels", "Thal", "Class")
 
 # Change "?" to NA
 heartDiseaseDataframe[heartDiseaseDataframe == "?"] <- NA
+
+# Change class 2,3,4 to 1
+heartDiseaseDataframe$Class[heartDiseaseDataframe$Class %in% c("2", "3", "4")] <- 1
 
 # Removing rows with NA values
 heartDiseaseDataframe <- na.omit(heartDiseaseDataframe)
@@ -35,34 +38,58 @@ heartDiseaseDataframe <- na.omit(heartDiseaseDataframe)
   # Getting dataframe class
   classes <- as.factor(heartDiseaseDataframe[,ncol(heartDiseaseDataframe)])
   
-  # Removing class column
-  data <- heartDiseaseDataframe[, -ncol(heartDiseaseDataframe)]
-  
   # Selecting data for test and training
   set.seed(123)
   
-  sample_size <- floor(0.8 * nrow(data))
-  train_index <- sample(seq_len(nrow(data)), size = sample_size)
+  sample_size <- floor(0.8 * nrow(heartDiseaseDataframe))
+  train_index <- sample(seq_len(nrow(heartDiseaseDataframe)), size = sample_size)
   
   # Preparing test object and training
-  train <- data[train_index, ]
-  test <- data[-train_index, ]
+  train <- heartDiseaseDataframe[train_index, -ncol(heartDiseaseDataframe)]
+  train_svm <- heartDiseaseDataframe[train_index,] 
+  test <- heartDiseaseDataframe[-train_index, -ncol(heartDiseaseDataframe)]
   
   # Selecting the test class column and train class column
   trainClass <- as.factor(classes[train_index])
   testClass <- as.factor(classes[-train_index])
   
-  # KNN classification without pca
-  knn_res1 <- knn(train, test, trainClass, 1)
-  knn_res3 <- knn(train, test, trainClass, 3)
-  knn_res5 <- knn(train, test, trainClass, 5)
-  knn_res7 <- knn(train, test, trainClass, 7)
-  knn_res9 <- knn(train, test, trainClass, 9)
+  # KNN classification
+  knn_res <- knn(train, test, trainClass, 1)
   
-  # Accuracy of KNN without pca
-  confusionMatrix(knn_res1, testClass)
-  confusionMatrix(knn_res3, testClass)
-  confusionMatrix(knn_res5, testClass)
-  confusionMatrix(knn_res7, testClass)
-  confusionMatrix(knn_res9, testClass)
+  # Accuracy of KNN
+  confusionMatrix(knn_res, testClass)
+  
+  # SVM classification
+  svm_classifier <- svm(formula = Class ~ .,
+                   data = train_svm,
+                   type = 'C-classification',
+                   kernel = 'linear')
+  
+  svm_res <- predict(svm_classifier, newdata = test)
+  
+  # Accuracy of SVM
+  confusionMatrix(svm_res, testClass)
+  
+  # NB classification
+  nb_classifier <- train(train, 
+                         trainClass, 
+                         'nb', 
+                         trControl=trainControl(method='cv',number=10))
+  
+  nb_res <- predict(nb_classifier, newdata = test)
+  
+  # Accuracy of NB
+  confusionMatrix(nb_res, testClass)
+  
+  # RF classification
+  rf_classifier <- randomForest(x = train, 
+                                y = trainClass,
+                                ntree = 500,
+                                proximity = TRUE)
+  
+  rf_res = predict(rf_classifier, newdata = test)
+  
+  # Accuracy of RF
+  confusionMatrix(rf_res, testClass)
+
   
