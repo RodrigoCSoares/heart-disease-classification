@@ -1,8 +1,10 @@
+# Libraries import
 library(ggplot2)
 library(class)
 library(caret)
 library(e1071)
 library(randomForest)
+library(factoextra)
 
 # Importing the dataset
 heartDiseaseDataframe <- read.csv("./dataset/processed.cleveland.data", fileEncoding = "UTF-8",sep=",", header = FALSE)
@@ -29,11 +31,14 @@ colnames(heartDiseaseDataframe) <- c("Age", "Sex", "ChestPainType", "RestBloodPr
 # Handling table columns
   
   # Class
-  heartDiseaseDataframe$Class <- ifelse(test = heartDiseaseDataframe$Class == 0, yes = "Healthy", no = "Unhealthy")
+  heartDiseaseDataframe$Class <- ifelse(test = heartDiseaseDataframe$Class >= 1, yes = 1, no = 0)
   heartDiseaseDataframe$Class <- as.factor(heartDiseaseDataframe$Class)
   
   # Other columns
   heartDiseaseDataframe[,c(1:9,11:13)] <- sapply(heartDiseaseDataframe[,c(1:9,11:13)], as.integer)
+  
+# Create datframe result of classifications
+data <- data.frame()
   
 # Data classification with all datas
   
@@ -62,7 +67,7 @@ colnames(heartDiseaseDataframe) <- c("Age", "Sex", "ChestPainType", "RestBloodPr
   cf_knn <- confusionMatrix(knn_res, testClass)
   
   # Add result to dataframe
-  data <- as.data.frame(cf_knn$overall)
+  data <- rbind(data, cf_knn$overall)
   
   # SVM classification
   svm_classifier <- svm(formula = Class ~ .,
@@ -76,7 +81,7 @@ colnames(heartDiseaseDataframe) <- c("Age", "Sex", "ChestPainType", "RestBloodPr
   cf_svm <- confusionMatrix(svm_res, testClass)
   
   # Add result to dataframe
-  data[,2] <- as.data.frame(cf_svm$overall)
+  data <- rbind(data, cf_svm$overall)
   
   # RF classification
   rf_classifier <- randomForest(formula = Class ~ .,
@@ -90,7 +95,22 @@ colnames(heartDiseaseDataframe) <- c("Age", "Sex", "ChestPainType", "RestBloodPr
   cf_rf <- confusionMatrix(as.factor(rf_res), testClass)
   
   # Add result to dataframe
-  data[,3] <- as.data.frame(cf_rf$overall)
+  data <- rbind(data, cf_rf$overall)
+  
+  # Cluster
+  cluster_data <- heartDiseaseDataframe[,-ncol(heartDiseaseDataframe)]
+  
+  # Elbow method to see number of necessary clusters
+  fviz_nbclust(cluster_data, kmeans, method = "wss")
+  # Number of clusters must to be 2 #
+  
+  cluster_res <- kmeans(cluster_data, 2)
+  
+  # Accuracy of cluster
+  result <- table(heartDiseaseDataframe$Class,cluster_res$cluster)
+  
+  colnames(result) <- c("Cluster 1", "Custer 2")
+  rownames(result) <- c("Healthy", "Unhealthy")
   
 # Adjusting data - 2
   
