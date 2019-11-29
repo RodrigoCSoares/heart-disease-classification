@@ -43,7 +43,7 @@ knnClassification <- function(train, test, testClass, trainClass, k) {
   # Accuracy of KNN
   cf_knn <- confusionMatrix(knn_res, testClass)
   
-  return(cf_knn$overall)
+  return(cf_knn$overall[("Accuracy")])
 }
 
 # SVM classification
@@ -61,7 +61,7 @@ svmClassification <- function(train, test, testClass) {
   # Accuracy of SVM
   cf_svm <- confusionMatrix(svm_res, testClass)
   
-  return(cf_svm$overall)
+  return(cf_svm$overall[("Accuracy")])
 }
 
 # RF classification
@@ -79,7 +79,7 @@ rfClassification <- function(train, test, testClass) {
   # Accuracy of RF
   cf_rf <- confusionMatrix(as.factor(rf_res), testClass)
   
-  return(cf_rf$overall)
+  return(cf_rf$overall[("Accuracy")])
   
 }
 
