@@ -318,11 +318,11 @@ boxplot(heartDiseaseDataframe[, -ncol(heartDiseaseDataframe)])
 
   # Calculate cluster by grouping
   cluster_res_2 <- kmeans(cluster_data, 2)
-  cluster_res_11 <- kmeans(cluster_data, 11)
+  cluster_res_19 <- kmeans(cluster_data, 19)
   
   # Cluster Analysis
   result_2 <- as.data.frame(table(heartDiseaseDataframe$Class, cluster_res_2$cluster))
-  result_11 <- as.data.frame(table(heartDiseaseDataframe$Class, cluster_res_11$cluster))
+  result_19 <- as.data.frame(table(heartDiseaseDataframe$Class, cluster_res_19$cluster))
   
 # ==== Handling data 2 ====
 
@@ -390,11 +390,11 @@ boxplot(heartDiseaseDataframe[, -ncol(heartDiseaseDataframe)])
 
   # Calculate cluster by grouping
   cluster_res_2 <- kmeans(cluster_data, 2)
-  cluster_res_11 <- kmeans(cluster_data, 11)
+  cluster_res_19 <- kmeans(cluster_data, 19)
 
   # Cluster Analysis
   result_2_outlier <- as.data.frame(table(heartDiseaseDataframe$Class, cluster_res_2$cluster))
-  result_11_outlier <- as.data.frame(table(heartDiseaseDataframe$Class, cluster_res_11$cluster))
+  result_19_outlier <- as.data.frame(table(heartDiseaseDataframe$Class, cluster_res_19$cluster))
 
 # ==== Handling data 3 ====
 
